@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t ederob/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true ederob/react-test yarn test
+
+after_success:
+  - docker build -t ederob/multi-client ./client
+  - docker build -t ederob/multi-nginx ./nginx
+  - docker build -t ederob/multi-server ./server
+  - docker build -t ederob/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push ederob/multi-client
+  - docker push ederob/multi-nginx
+  - docker push ederob/multi-server
+  - docker push ederob/multi-worker
